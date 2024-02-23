@@ -9,10 +9,10 @@ import { FlightPlanService } from '@fmgc/flightplanning/new/FlightPlanService';
 import { FlightPlanIndex } from '@fmgc/flightplanning/new/FlightPlanManager';
 import { NavigationDatabaseService } from '@fmgc/flightplanning/new/NavigationDatabaseService';
 import { Airway, Fix } from '@flybywiresim/fbw-sdk';
+import { ISimbriefData, simbriefDataParser } from '@flybywiresim/flypad';
 import { Coordinates, distanceTo } from 'msfs-geo';
 import { DisplayInterface } from '@fmgc/flightplanning/new/interface/DisplayInterface';
 import { FlightPlanPerformanceData } from '@fmgc/flightplanning/new/plans/performance/FlightPlanPerformanceData';
-import { ISimbriefData, simbriefDataParser } from '../../../../../instruments/src/EFB/Apis/Simbrief';
 import { DataInterface } from '../interface/DataInterface';
 
 const SIMBRIEF_API_URL = 'https://www.simbrief.com/api/xml.fetcher.php?json=1';
