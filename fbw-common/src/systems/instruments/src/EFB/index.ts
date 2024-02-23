@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 export * from './Efb';
+export * from './Apis/Simbrief';
 export * from './Assets/Error';
 export * from './Assets/GroundServiceOutline';
 export * from './Assets/NoseOutline';
