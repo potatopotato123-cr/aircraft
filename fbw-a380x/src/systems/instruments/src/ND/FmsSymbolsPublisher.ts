@@ -3,11 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import { BasePublisher, EventBus } from '@microsoft/msfs-sdk';
-<<<<<<< HEAD
-import { EfisSide, NdSymbol, NdTraffic, GenericDataListenerSync } from '@flybywiresim/fbw-sdk';
-=======
 import { EfisSide, GenericDataListenerSync, NdSymbol, NdTraffic } from '@flybywiresim/fbw-sdk';
->>>>>>> feat-a380x-oans
 
 import { PathVector } from '@fmgc/guidance/lnav/PathVector';
 
