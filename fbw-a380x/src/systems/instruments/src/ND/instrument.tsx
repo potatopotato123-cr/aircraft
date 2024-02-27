@@ -10,12 +10,11 @@ import { a380EfisZoomRangeSettings, A380EfisZoomRangeValue, Oanc, OANC_RENDER_HE
 import { VerticalDisplayDummy } from 'instruments/src/ND/VerticalDisplay';
 import { ContextMenu, ContextMenuElement } from 'instruments/src/ND/UI/ContextMenu';
 import { OansControlPanel } from 'instruments/src/ND/OansControlPanel';
-import { MouseCursor } from './UI/MouseCursor';
+import { FmsSymbolsPublisher } from 'instruments/src/ND/FmsSymbolsPublisher';
 import { NDSimvarPublisher, NDSimvars } from './NDSimvarPublisher';
 import { AdirsValueProvider } from '../MsfsAvionicsCommon/AdirsValueProvider';
 import { FmsDataPublisher } from '../MsfsAvionicsCommon/providers/FmsDataPublisher';
-import { FmsSymbolsPublisher } from 'instruments/src/ND/FmsSymbolsPublisher';
-import { FmsOansPublisher } from 'instruments/src/ND/FmsOansPublisher';
+import { FmsOansData, FmsOansPublisher } from '../MsfsAvionicsCommon/providers/FmsOansPublisher';
 import { VorBusPublisher } from '../MsfsAvionicsCommon/providers/VorBusPublisher';
 import { TcasBusPublisher } from '../MsfsAvionicsCommon/providers/TcasBusPublisher';
 import { FGDataPublisher } from '../MsfsAvionicsCommon/providers/FGDataPublisher';
@@ -25,10 +24,10 @@ import { EgpwcBusPublisher } from '../MsfsAvionicsCommon/providers/EgpwcBusPubli
 import { DmcPublisher } from '../MsfsAvionicsCommon/providers/DmcPublisher';
 import { FMBusPublisher } from '../MsfsAvionicsCommon/providers/FMBusPublisher';
 import { FcuBusPublisher, FcuSimVars } from '../MsfsAvionicsCommon/providers/FcuBusPublisher';
+import { MouseCursor } from './UI/MouseCursor';
 
 import './style.scss';
 import './oans-styles.scss';
-
 
 declare type MousePosition = {
     x: number;
@@ -55,8 +54,6 @@ class NDInstrument implements FsInstrument {
     private readonly fmBusPublisher: FMBusPublisher;
 
     private readonly fmsSymbolsPublisher: FmsSymbolsPublisher;
-
-    private readonly fmsOansPublisher: FmsOansPublisher;
 
     private readonly vorBusPublisher: VorBusPublisher;
 
@@ -151,6 +148,8 @@ class NDInstrument implements FsInstrument {
 
     private oansControlPanelContainerRef = FSComponent.createRef<HTMLDivElement>();
 
+    private cursorVisible = Subject.create<boolean>(true);
+
     constructor() {
         const side: EfisSide = getDisplayIndex() === 1 ? 'L' : 'R';
         const stateSubject = Subject.create<'L' | 'R'>(side);
@@ -164,7 +163,6 @@ class NDInstrument implements FsInstrument {
         this.fgDataPublisher = new FGDataPublisher(this.bus);
         this.fmBusPublisher = new FMBusPublisher(this.bus);
         this.fmsSymbolsPublisher = new FmsSymbolsPublisher(this.bus, side);
-        this.fmsOansPublisher = new FmsOansPublisher(this.bus, side);
         this.vorBusPublisher = new VorBusPublisher(this.bus);
         this.tcasBusPublisher = new TcasBusPublisher(this.bus);
         this.dmcPublisher = new DmcPublisher(this.bus);
@@ -181,7 +179,6 @@ class NDInstrument implements FsInstrument {
         this.backplane.addPublisher('fg', this.fgDataPublisher);
         this.backplane.addPublisher('fms-arinc', this.fmBusPublisher);
         this.backplane.addPublisher('fms-symbols', this.fmsSymbolsPublisher);
-        this.backplane.addPublisher('fms-oans', this.fmsOansPublisher);
         this.backplane.addPublisher('vor', this.vorBusPublisher);
         this.backplane.addPublisher('tcas', this.tcasBusPublisher);
         this.backplane.addPublisher('dmc', this.dmcPublisher);
@@ -241,7 +238,11 @@ class NDInstrument implements FsInstrument {
                             togglePanel={() => this.controlPanelVisible.set(!this.controlPanelVisible.get())}
                         />
                     </div>
-                    <MouseCursor side={Subject.create(this.efisSide === 'L' ? 'CAPT' : 'FO')} ref={this.mouseCursorRef} />
+                    <MouseCursor
+                        ref={this.mouseCursorRef}
+                        side={Subject.create(this.efisSide === 'L' ? 'CAPT' : 'FO')}
+                        visible={this.cursorVisible}
+                        />
                 </CdsDisplayUnit>
             </div>,
             document.getElementById('ND_CONTENT'),
@@ -251,7 +252,12 @@ class NDInstrument implements FsInstrument {
         document.getElementById('ND_CONTENT')?.querySelector(':scope > h1')?.remove();
 
         this.topRef.instance.addEventListener('mousemove', (ev) => {
-            this.mouseCursorRef.instance.updatePosition(ev.clientX, ev.clientY);
+            if (this.oansRef.getOrDefault() && this.oansRef.instance.isPanning) {
+                this.cursorVisible.set(false);
+            } else {
+                this.mouseCursorRef.instance.updatePosition(ev.clientX, ev.clientY);
+                this.cursorVisible.set(true);
+            }
         });
 
         this.ndContainerRef.instance.addEventListener('contextmenu', (e) => {
